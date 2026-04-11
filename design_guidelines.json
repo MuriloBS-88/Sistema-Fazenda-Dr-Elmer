@@ -1,0 +1,127 @@
+{
+  "theme": "light",
+  "archetype": "Archetype 1 (Organic & Earthy)",
+  "rationale": "For a farm management and livestock dashboard, users need a grounded, reliable, and highly legible interface. The Earthy archetype provides a sense of trust and natural connection without feeling like a generic corporate SaaS. The light theme ensures excellent readability in bright outdoor environments (e.g., fields, barns).",
+  "colors": {
+    "brand": {
+      "primary": "#4A6741",
+      "primary_hover": "#3B5334",
+      "primary_light": "#E8F0E6",
+      "secondary": "#C25934",
+      "secondary_hover": "#A64B2B"
+    },
+    "surface": {
+      "background": "#F4F3F0",
+      "card": "#FFFFFF",
+      "card_hover": "#FDFCFB",
+      "sidebar": "#1B2620"
+    },
+    "text": {
+      "heading": "#1B2620",
+      "body": "#3A453F",
+      "muted": "#7A8780",
+      "on_primary": "#FFFFFF",
+      "on_sidebar": "#E5E3DB"
+    },
+    "feedback": {
+      "success": "#3B823E",
+      "warning": "#D99B29",
+      "danger": "#C25934",
+      "info": "#2B6CB0"
+    },
+    "border": {
+      "default": "#E5E3DB",
+      "focus": "#4A6741",
+      "divider": "#E5E3DB"
+    }
+  },
+  "typography": {
+    "font_families": {
+      "heading": "'Work Sans', sans-serif",
+      "body": "'IBM Plex Sans', sans-serif",
+      "mono": "'IBM Plex Mono', monospace"
+    },
+    "scales": {
+      "h1": "text-4xl sm:text-5xl font-semibold tracking-tight text-[#1B2620]",
+      "h2": "text-2xl sm:text-3xl font-medium tracking-tight text-[#1B2620]",
+      "h3": "text-xl sm:text-2xl font-medium text-[#1B2620]",
+      "h4": "text-lg sm:text-xl font-medium text-[#1B2620]",
+      "body_large": "text-lg text-[#3A453F] leading-relaxed",
+      "body": "text-base text-[#3A453F] leading-relaxed",
+      "small": "text-sm text-[#7A8780]",
+      "overline": "text-xs font-semibold uppercase tracking-[0.2em] text-[#7A8780]"
+    },
+    "rules": [
+      "DO NOT use Inter, Roboto, or Open Sans.",
+      "Headings must use tight letter spacing (tracking-tight).",
+      "Overlines/Labels must be uppercase with wide spacing.",
+      "Never center align dense data; stick to left-alignment for standard text and right-alignment for numbers in tables."
+    ]
+  },
+  "layout_and_spacing": {
+    "spacing_system": "Generous Spacing Philosophy (Tailwind Scale)",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grids": {
+      "dashboard_overview": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+      "forms": "grid-cols-1 md:grid-cols-2 gap-6"
+    },
+    "rules": [
+      "Use Mode B: The 'Control Room' Grid for the dashboard.",
+      "Containers with borders MUST have internal padding (p-6 or p-8) to prevent text collision.",
+      "Images must not exceed 80vh on mobile."
+    ]
+  },
+  "surface_strategies": {
+    "cards": "Neumorphism (Tactile Variant): Flat background (#FFFFFF), 1px subtle border (#E5E3DB), no shadow by default. On hover: Slight lift (-translate-y-1) and shadow-lg.",
+    "sidebar": "Flat Solid surface. Dark background (#1B2620) with high contrast text.",
+    "headers": "Flat Solid surface with a hard bottom border. Avoid glassmorphism for health/farm apps to maintain data clarity."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#4A6741] text-white hover:bg-[#3B5334] rounded-lg px-5 py-2.5 font-medium transition-all active:scale-95",
+      "secondary": "bg-white text-[#3A453F] border border-[#E5E3DB] hover:bg-[#F4F3F0] rounded-lg px-5 py-2.5 font-medium transition-all",
+      "destructive": "bg-[#C25934] text-white hover:bg-[#A64B2B] rounded-lg px-5 py-2.5 font-medium transition-all"
+    },
+    "inputs": "bg-[#FFFFFF] border border-[#E5E3DB] text-[#1B2620] rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#4A6741]/20 focus:border-[#4A6741] transition-all",
+    "tables": "w-full text-left text-sm text-[#3A453F] border-collapse. Use clear borders (border-b border-[#E5E3DB]) for each row. Highlight numeric columns with right alignment.",
+    "badges": "rounded-md px-2 py-1 text-xs font-medium"
+  },
+  "motion_and_interactions": {
+    "hover": "All interactive elements must have explicit hover states (background color change + slight shadow increase).",
+    "transitions": "Use specific properties: transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease.",
+    "focus": "Focus states must use ring-2 ring-[#4A6741]/50 for accessibility."
+  },
+  "icons_and_assets": {
+    "library": "@phosphor-icons/react",
+    "usage": "Use Phosphor Icons for dense dashboard metrics (e.g., Cow, Pig, ChartLineUp, CurrencyDollar, FilePdf).",
+    "installation": "yarn add @phosphor-icons/react"
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.unsplash.com/photo-1600828576850-60f312b4d83d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwyfHxjYXR0bGUlMjBmYXJtJTIwc3Vuc2V0fGVufDB8fHx8MTc3NTk0MDI2M3ww&ixlib=rb-4.1.0&q=85",
+        "category": "welcome_banner",
+        "description": "Brown and white cow on field - use as a subtle background or banner for the dashboard welcome section."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1594771804886-a933bb2d609b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwxfHxmYXJtJTIwdHJhY3RvcnxlbnwwfHx8fDE3NzU5NDAyNjd8MA&ixlib=rb-4.1.0&q=85",
+        "category": "expense_placeholder",
+        "description": "Green tractor - use as a placeholder or hero image in the expenses or machinery management empty state."
+      }
+    ]
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text meets minimum 4.5:1 contrast ratio against backgrounds.",
+    "testing_attributes": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case (e.g., data-testid='export-pdf-button')."
+  },
+  "instructions_to_main_agent": [
+    "Set up the layout with a Sidebar Navigation containing: Dashboard, Animais, Movimentações, Despesas, Relatórios.",
+    "Implement the main Dashboard page with a Bento/Control Room grid. Top row: Key Metrics (Total Animais, Lucro, Despesas). Middle row: Charts using Recharts (Lucro vs Despesas ao longo do ano).",
+    "Build an 'Animais' CRUD page to list and add livestock. Fields should include Tipo (Bovino, Suíno, Ovino), Tag/Identificação, Data de Nascimento, Peso Atual.",
+    "Build a 'Movimentações e Eventos' section to record Compra, Venda, Morte, Nascimento, Desmame, Vacinação.",
+    "Build a 'Despesas' tracker with custom categories (Alimentação, Veterinário, Manutenção, etc).",
+    "Include mockup 'Exportar PDF' and 'Exportar Excel' buttons in the Relatórios or Dashboard views using Phosphor Icons.",
+    "Ensure the UI uses the #4A6741 primary color and strictly follows the typography rules (Work Sans for headings, IBM Plex Sans for body).",
+    "Inject the Google Fonts for Work Sans and IBM Plex Sans in the main index.html file."
+  ]
+}
