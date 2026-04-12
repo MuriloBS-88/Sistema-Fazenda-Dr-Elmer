@@ -1,0 +1,224 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Plus, Trash, UserCircle, ShieldCheck } from '@phosphor-icons/react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from 'sonner';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+export default function Usuarios() {
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    password: '',
+    role: 'user'
+  });
+
+  useEffect(() => {
+    carregarUsuarios();
+  }, []);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return { headers: { Authorization: `Bearer ${token}` } };
+  };
+
+  const carregarUsuarios = async () => {
+    try {
+      const response = await axios.get(`${API}/users`, getAuthHeaders());
+      setUsuarios(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar usuarios:', error);
+      toast.error('Erro ao carregar usuarios');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.nome || !formData.email || !formData.password) {
+      toast.error('Preencha todos os campos obrigatorios');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/users`, formData, getAuthHeaders());
+      toast.success('Usuario cadastrado com sucesso!');
+      setDialogOpen(false);
+      resetForm();
+      carregarUsuarios();
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : 'Erro ao cadastrar usuario';
+      toast.error(msg);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir este usuario?')) return;
+    try {
+      await axios.delete(`${API}/users/${id}`, getAuthHeaders());
+      toast.success('Usuario excluido com sucesso!');
+      carregarUsuarios();
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : 'Erro ao excluir usuario';
+      toast.error(msg);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({ nome: '', email: '', password: '', role: 'user' });
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64">Carregando...</div>;
+  }
+
+  return (
+    <div className="fade-in" data-testid="usuarios-page">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1B2620]" data-testid="usuarios-title">
+            Usuarios
+          </h1>
+          <p className="text-lg text-[#7A8780] mt-2">Gerencie quem pode acessar o sistema</p>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#4A6741] hover:bg-[#3B5334] text-white" data-testid="add-usuario-btn">
+              <Plus size={20} className="mr-2" />
+              Novo Usuario
+            </Button>
+          </DialogTrigger>
+          <DialogContent data-testid="usuario-dialog">
+            <DialogHeader>
+              <DialogTitle>Novo Usuario</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="nome">Nome *</Label>
+                <Input
+                  id="nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                  required
+                  data-testid="usuario-nome-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  required
+                  data-testid="usuario-email-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Senha *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  required
+                  data-testid="usuario-password-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="role">Perfil *</Label>
+                <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                  <SelectTrigger data-testid="role-select">
+                    <SelectValue placeholder="Selecione o perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="user">Usuario</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} data-testid="cancel-btn">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-[#4A6741] hover:bg-[#3B5334] text-white" data-testid="save-usuario-btn">
+                  Salvar
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="bg-white rounded-lg border border-[#E5E3DB] overflow-hidden" data-testid="usuarios-table">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-[#F4F3F0] border-b border-[#E5E3DB]">
+              <tr>
+                <th className="px-6 py-4 font-semibold text-[#1B2620]">Nome</th>
+                <th className="px-6 py-4 font-semibold text-[#1B2620]">Email</th>
+                <th className="px-6 py-4 font-semibold text-[#1B2620]">Perfil</th>
+                <th className="px-6 py-4 font-semibold text-[#1B2620]">Acoes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-6 py-12 text-center text-[#7A8780]">
+                    Nenhum usuario cadastrado
+                  </td>
+                </tr>
+              ) : (
+                usuarios.map((usuario) => (
+                  <tr key={usuario.id} className="table-row border-b border-[#E5E3DB] hover:bg-[#FDFCFB]" data-testid={`usuario-row-${usuario.email}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        {usuario.role === 'admin' ? (
+                          <ShieldCheck size={20} className="text-[#4A6741]" />
+                        ) : (
+                          <UserCircle size={20} className="text-[#7A8780]" />
+                        )}
+                        <span className="font-medium text-[#1B2620]">{usuario.nome}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-[#3A453F]">{usuario.email}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                        usuario.role === 'admin' ? 'bg-[#4A6741] text-white' : 'bg-[#E5E3DB] text-[#3A453F]'
+                      }`}>
+                        {usuario.role === 'admin' ? 'Administrador' : 'Usuario'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleDelete(usuario.id)}
+                        className="text-[#C25934] hover:text-[#A64B2B]"
+                        data-testid={`delete-usuario-${usuario.email}`}
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
