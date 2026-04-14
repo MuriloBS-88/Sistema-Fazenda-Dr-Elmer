@@ -6,9 +6,11 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import SelectEditavel from '../components/SelectEditavel';
 import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const TIPOS_EVENTOS_PADRAO = ['nascimento', 'desmame', 'vacinacao', 'pesagem', 'tratamento'];
 const TIPOS_EVENTOS = [
   { value: 'nascimento', label: 'Nascimento' },
   { value: 'desmame', label: 'Desmame' },
@@ -104,15 +106,10 @@ export default function Eventos() {
           <DialogContent className="max-h-[90vh] overflow-y-auto" data-testid="evento-dialog">
             <DialogHeader><DialogTitle>{editando ? 'Editar Evento' : 'Novo Evento'}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label>Tipo de Evento *</Label>
-                <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
-                  <SelectTrigger data-testid="tipo-select"><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
-                  <SelectContent>
-                    {TIPOS_EVENTOS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label>Tipo de Evento *</Label>
+                  <SelectEditavel campo="tipo_evento" value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})} placeholder="Selecione o tipo" opcoesPadrao={TIPOS_EVENTOS_PADRAO} />
+                </div>
               <div>
                 <Label>Animal *</Label>
                 <Select value={formData.animal_id} onValueChange={(v) => setFormData({...formData, animal_id: v})}>

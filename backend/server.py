@@ -238,6 +238,26 @@ class Categoria(BaseModel):
     cor: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class OpcaoCreate(BaseModel):
+    campo: str
+    valor: str
+
+class Opcao(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campo: str
+    valor: str
+
+class MovimentacaoBulkCreate(BaseModel):
+    tipo: Literal["entrada", "saida", "producao"]
+    motivo: str
+    tag_prefixo: str
+    tag_inicio: int
+    tag_fim: int
+    data: date
+    valor: Optional[float] = None
+    observacoes: Optional[str] = ""
+
 class AnimalCreate(BaseModel):
     tipo: str
     tag: str
@@ -392,6 +412,34 @@ async def atualizar_categoria(categoria_id: str, input: CategoriaCreate):
     return serialize_doc(doc)
 
 
+# ============= OPCOES PERSONALIZADAS =============
+
+@api_router.post("/opcoes", response_model=Opcao)
+async def criar_opcao(input: OpcaoCreate):
+    opcao = Opcao(**input.model_dump())
+    await db.opcoes.insert_one(opcao.model_dump())
+    return opcao
+
+@api_router.get("/opcoes")
+async def listar_opcoes(campo: Optional[str] = None):
+    filtro = {}
+    if campo:
+        filtro["campo"] = campo
+    docs = await db.opcoes.find(filtro, {"_id": 0}).to_list(1000)
+    return docs
+
+@api_router.delete("/opcoes/{opcao_id}")
+async def deletar_opcao(opcao_id: str):
+    await db.opcoes.delete_one({"id": opcao_id})
+    return {"message": "Opcao deletada"}
+
+@api_router.put("/opcoes/{opcao_id}")
+async def atualizar_opcao(opcao_id: str, input: OpcaoCreate):
+    await db.opcoes.update_one({"id": opcao_id}, {"$set": {"valor": input.valor}})
+    doc = await db.opcoes.find_one({"id": opcao_id}, {"_id": 0})
+    return doc
+
+
 # ============= ANIMAIS =============
 
 @api_router.post("/animais", response_model=Animal)
@@ -484,6 +532,39 @@ async def deletar_movimentacao(movimentacao_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Movimentacao nao encontrada")
     return {"message": "Movimentacao deletada"}
+
+@api_router.post("/movimentacoes/bulk")
+async def criar_movimentacao_em_massa(input: MovimentacaoBulkCreate):
+    import re
+    animais_encontrados = []
+    for num in range(input.tag_inicio, input.tag_fim + 1):
+        regex_pattern = re.escape(input.tag_prefixo) + "0*" + str(num) + "$"
+        animal = await db.animais.find_one({"tag": {"$regex": regex_pattern, "$options": "i"}}, {"_id": 0})
+        if not animal:
+            padded = str(num).zfill(3)
+            tag_tentativa = f"{input.tag_prefixo}{padded}"
+            animal = await db.animais.find_one({"tag": tag_tentativa}, {"_id": 0})
+        if animal:
+            animais_encontrados.append(animal)
+    
+    if not animais_encontrados:
+        raise HTTPException(status_code=404, detail=f"Nenhum animal encontrado com tags de {input.tag_prefixo}{input.tag_inicio} a {input.tag_prefixo}{input.tag_fim}")
+    
+    movimentacoes_criadas = []
+    for animal in animais_encontrados:
+        if input.tipo == "saida":
+            status = input.motivo if input.motivo in ["venda", "morte", "perda"] else "inativo"
+            await db.animais.update_one({"id": animal["id"]}, {"$set": {"status": status}})
+        
+        mov = Movimentacao(
+            tipo=input.tipo, motivo=input.motivo, animal_id=animal["id"],
+            data=input.data, valor=input.valor, quantidade=1, observacoes=input.observacoes or ""
+        )
+        doc = prepare_for_db(mov.model_dump())
+        await db.movimentacoes.insert_one(doc)
+        movimentacoes_criadas.append({"animal_tag": animal["tag"], "id": mov.id})
+    
+    return {"total": len(movimentacoes_criadas), "movimentacoes": movimentacoes_criadas}
 
 
 # ============= EVENTOS =============
