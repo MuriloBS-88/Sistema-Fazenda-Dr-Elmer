@@ -12,6 +12,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function SelectEditavel({ campo, value, onValueChange, placeholder, opcoesPadrao = [], allowNone = false, noneLabel = 'Nenhum' }) {
   const [opcoes, setOpcoes] = useState([]);
+  const [removidos, setRemovidos] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novaOpcao, setNovaOpcao] = useState('');
   const [editandoId, setEditandoId] = useState(null);
@@ -21,12 +22,17 @@ export default function SelectEditavel({ campo, value, onValueChange, placeholde
 
   const carregarOpcoes = async () => {
     try {
-      const res = await axios.get(`${API}/opcoes?campo=${campo}`);
+      const [res, remRes] = await Promise.all([
+        axios.get(`${API}/opcoes?campo=${campo}`),
+        axios.get(`${API}/opcoes?campo=${campo}_removido`)
+      ]);
       setOpcoes(res.data);
+      setRemovidos(remRes.data.map(r => r.valor));
     } catch (e) { /* silencioso */ }
   };
 
-  const todasOpcoes = [...opcoesPadrao, ...opcoes.map(o => o.valor)];
+  const padroesAtivos = opcoesPadrao.filter(op => !removidos.includes(op));
+  const todasOpcoes = [...padroesAtivos, ...opcoes.map(o => o.valor)];
   const opcoesUnicas = [...new Set(todasOpcoes)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
   const handleAdicionar = async () => {
@@ -49,6 +55,7 @@ export default function SelectEditavel({ campo, value, onValueChange, placeholde
   };
 
   const handleDeletar = async (id) => {
+    if (opcoesUnicas.length <= 1) { toast.error('E necessario manter pelo menos 1 opcao na lista'); return; }
     if (!window.confirm('Excluir esta opcao?')) return;
     try {
       await axios.delete(`${API}/opcoes/${id}`);
@@ -59,14 +66,21 @@ export default function SelectEditavel({ campo, value, onValueChange, placeholde
   const handleEditarPadrao = async (valorOriginal) => {
     if (!editandoValor.trim() || editandoValor.trim() === valorOriginal) { setEditandoId(null); return; }
     try {
+      // Salva no banco com o valor original como referencia para substituir
       await axios.post(`${API}/opcoes`, { campo, valor: editandoValor.trim() });
+      await axios.post(`${API}/opcoes`, { campo: `${campo}_removido`, valor: valorOriginal });
       setEditandoId(null); setEditandoValor(''); carregarOpcoes();
-      toast.success('Opcao personalizada criada!');
+      toast.success('Opcao atualizada!');
     } catch (e) { toast.error('Erro ao editar'); }
   };
 
   const handleDeletarPadrao = async (valor) => {
-    toast.error('Para remover opcoes padrao, entre em contato com o administrador do sistema');
+    if (opcoesUnicas.length <= 1) { toast.error('E necessario manter pelo menos 1 opcao na lista'); return; }
+    if (!window.confirm(`Excluir a opcao "${valor}"?`)) return;
+    try {
+      await axios.post(`${API}/opcoes`, { campo: `${campo}_removido`, valor });
+      carregarOpcoes(); toast.success('Opcao removida!');
+    } catch (e) { toast.error('Erro ao remover'); }
   };
 
   return (
