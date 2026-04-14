@@ -48,8 +48,8 @@ export default function Animais() {
   const [dialogEventoOpen, setDialogEventoOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const [selecionados, setSelecionados] = useState(new Set());
-  const [formData, setFormData] = useState({ tipo: '', tag: '', sexo: '', genitora_id: '', data_nascimento: '', peso_atual: '', observacoes: '' });
-  const [formBulk, setFormBulk] = useState({ tipo: '', tag_inicial: '', quantidade: 2, sexo: '', data_nascimento: '', peso_atual: '', observacoes: '' });
+  const [formData, setFormData] = useState({ tipo: '', tag: '', sexo: '', genitora_id: '', data_nascimento: '', peso_atual: '', peso_tipo: 'real', observacoes: '' });
+  const [formBulk, setFormBulk] = useState({ tipo: '', tag_inicial: '', quantidade: 2, sexo: '', data_nascimento: '', peso_atual: '', peso_tipo: 'estimado', observacoes: '' });
   const [formEvento, setFormEvento] = useState({ tipo: '', data: new Date().toISOString().split('T')[0], detalhes: '', peso: '', vacina: '' });
 
   // Filtros
@@ -106,7 +106,8 @@ export default function Animais() {
     const payload = {
       ...formData, peso_atual: formData.peso_atual ? parseFloat(formData.peso_atual) : null,
       data_nascimento: formData.data_nascimento || null, sexo: formData.sexo || null,
-      genitora_id: formData.genitora_id && formData.genitora_id !== 'none' ? formData.genitora_id : null
+      genitora_id: formData.genitora_id && formData.genitora_id !== 'none' ? formData.genitora_id : null,
+      peso_tipo: formData.peso_tipo || 'real'
     };
     try {
       if (editando) { await axios.put(`${API}/animais/${editando.id}`, payload); toast.success('Animal atualizado!'); }
@@ -163,14 +164,14 @@ export default function Animais() {
     catch (error) { toast.error('Erro ao excluir'); }
   };
 
-  const resetForm = () => { setFormData({ tipo: '', tag: '', sexo: '', genitora_id: '', data_nascimento: '', peso_atual: '', observacoes: '' }); setEditando(null); };
-  const resetBulkForm = () => { setFormBulk({ tipo: '', tag_inicial: '', quantidade: 2, sexo: '', data_nascimento: '', peso_atual: '', observacoes: '' }); };
+  const resetForm = () => { setFormData({ tipo: '', tag: '', sexo: '', genitora_id: '', data_nascimento: '', peso_atual: '', peso_tipo: 'real', observacoes: '' }); setEditando(null); };
+  const resetBulkForm = () => { setFormBulk({ tipo: '', tag_inicial: '', quantidade: 2, sexo: '', data_nascimento: '', peso_atual: '', peso_tipo: 'estimado', observacoes: '' }); };
   const resetEventoForm = () => { setFormEvento({ tipo: '', data: new Date().toISOString().split('T')[0], detalhes: '', peso: '', vacina: '' }); };
   const limparFiltros = () => { setFiltroTipo(''); setFiltroSexo(''); setFiltroStatus(''); setFiltroIdadeMin(''); setFiltroIdadeMax(''); };
 
   const abrirEdicao = (animal) => {
     setEditando(animal);
-    setFormData({ tipo: animal.tipo, tag: animal.tag, sexo: animal.sexo || '', genitora_id: animal.genitora_id || '', data_nascimento: animal.data_nascimento || '', peso_atual: animal.peso_atual || '', observacoes: animal.observacoes || '' });
+    setFormData({ tipo: animal.tipo, tag: animal.tag, sexo: animal.sexo || '', genitora_id: animal.genitora_id || '', data_nascimento: animal.data_nascimento || '', peso_atual: animal.peso_atual || '', peso_tipo: animal.peso_tipo || 'real', observacoes: animal.observacoes || '' });
     setDialogOpen(true);
   };
 
@@ -201,7 +202,7 @@ export default function Animais() {
                 <div><Label>Quantidade *</Label><Input type="number" min="2" max="500" value={formBulk.quantidade} onChange={(e) => setFormBulk({...formBulk, quantidade: e.target.value})} required /></div>
                 <div><Label>Sexo</Label><Select value={formBulk.sexo || 'none_sexo'} onValueChange={(v) => setFormBulk({...formBulk, sexo: v === 'none_sexo' ? '' : v})}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="none_sexo">Nao informado</SelectItem>{SEXOS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data de Nascimento</Label><div className="flex items-center gap-3"><Input type="date" value={formBulk.data_nascimento} onChange={(e) => setFormBulk({...formBulk, data_nascimento: e.target.value})} className="flex-1" />{formBulk.data_nascimento && <span className="text-sm font-medium text-[#4A6741] whitespace-nowrap">{formatarIdade(formBulk.data_nascimento)}</span>}</div></div>
-                <div><Label>Peso Medio Estimado (kg)</Label><Input type="number" step="0.01" value={formBulk.peso_atual} onChange={(e) => setFormBulk({...formBulk, peso_atual: e.target.value})} placeholder="Ex: 350" /><p className="text-xs text-[#D99B29] mt-1">* Este peso sera aplicado como estimativa para todos os animais do lote</p></div>
+                <div><Label>Peso Medio Estimado (kg)</Label><div className="flex gap-2"><Input type="number" step="0.01" value={formBulk.peso_atual} onChange={(e) => setFormBulk({...formBulk, peso_atual: e.target.value})} placeholder="Ex: 350" className="flex-1" /><Select value={formBulk.peso_tipo || 'estimado'} onValueChange={(v) => setFormBulk({...formBulk, peso_tipo: v})}><SelectTrigger className="w-36"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="real">Real</SelectItem><SelectItem value="estimado">Estimado</SelectItem><SelectItem value="medio">Medio</SelectItem></SelectContent></Select></div></div>
                 <div><Label>Observacoes</Label><Input value={formBulk.observacoes} onChange={(e) => setFormBulk({...formBulk, observacoes: e.target.value})} /></div>
                 <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogBulkOpen(false)}>Cancelar</Button><Button type="submit" className="bg-[#4A6741] hover:bg-[#3B5334] text-white">Cadastrar</Button></div>
               </form>
@@ -220,7 +221,7 @@ export default function Animais() {
                 <div><Label>Sexo</Label><Select value={formData.sexo || 'none_sexo'} onValueChange={(v) => setFormData({...formData, sexo: v === 'none_sexo' ? '' : v})}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="none_sexo">Nao informado</SelectItem>{SEXOS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Genitora (Mae)</Label><Select value={formData.genitora_id || 'none'} onValueChange={(v) => setFormData({...formData, genitora_id: v === 'none' ? '' : v})}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="none">Nenhuma</SelectItem>{femeas.map(a => <SelectItem key={a.id} value={a.id}>{a.tag} - {a.tipo}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>Data de Nascimento</Label><div className="flex items-center gap-3"><Input type="date" value={formData.data_nascimento} onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})} className="flex-1" />{formData.data_nascimento && <span className="text-sm font-medium text-[#4A6741] whitespace-nowrap">{formatarIdade(formData.data_nascimento)}</span>}</div></div>
-                <div><Label>Peso Atual (kg)</Label><Input type="number" step="0.01" value={formData.peso_atual} onChange={(e) => setFormData({...formData, peso_atual: e.target.value})} /></div>
+                <div><Label>Peso (kg)</Label><div className="flex gap-2"><Input type="number" step="0.01" value={formData.peso_atual} onChange={(e) => setFormData({...formData, peso_atual: e.target.value})} className="flex-1" /><Select value={formData.peso_tipo || 'real'} onValueChange={(v) => setFormData({...formData, peso_tipo: v})}><SelectTrigger className="w-36"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="real">Real</SelectItem><SelectItem value="estimado">Estimado</SelectItem><SelectItem value="medio">Medio</SelectItem></SelectContent></Select></div></div>
                 <div><Label>Observacoes</Label><Input value={formData.observacoes} onChange={(e) => setFormData({...formData, observacoes: e.target.value})} /></div>
                 <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" className="bg-[#4A6741] hover:bg-[#3B5334] text-white">{editando ? 'Atualizar' : 'Salvar'}</Button></div>
               </form>
@@ -311,7 +312,7 @@ export default function Animais() {
                   <td className="px-4 py-4 text-[#3A453F]">{animal.sexo === 'macho' ? 'Macho' : animal.sexo === 'femea' ? 'Femea' : '-'}</td>
                   <td className="px-4 py-4 text-[#3A453F]">{formatarIdade(animal.data_nascimento)}</td>
                   <td className="px-4 py-4 text-[#3A453F]">{animal.genitora_id ? getGenitoraTag(animal.genitora_id) : '-'}</td>
-                  <td className="px-4 py-4 text-[#3A453F]">{animal.peso_atual ? <span className="flex items-center gap-1">{animal.peso_atual} kg <span className={`text-[10px] font-medium px-1 rounded ${animal.peso_tipo === 'estimado' ? 'bg-[#D99B29]/15 text-[#D99B29]' : 'bg-[#3B823E]/15 text-[#3B823E]'}`}>{animal.peso_tipo === 'estimado' ? 'EST' : 'EFT'}</span></span> : '-'}</td>
+                  <td className="px-4 py-4 text-[#3A453F]">{animal.peso_atual ? <span className="flex items-center gap-1">{animal.peso_atual} kg <span className={`text-[10px] font-medium px-1 rounded ${animal.peso_tipo === 'estimado' ? 'bg-[#D99B29]/15 text-[#D99B29]' : animal.peso_tipo === 'medio' ? 'bg-[#2B6CB0]/15 text-[#2B6CB0]' : 'bg-[#3B823E]/15 text-[#3B823E]'}`}>{animal.peso_tipo === 'estimado' ? 'EST' : animal.peso_tipo === 'medio' ? 'MED' : 'REAL'}</span></span> : '-'}</td>
                   <td className="px-4 py-4"><span className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusBadge(animal.status)}`}>{animal.status}</span></td>
                   <td className="px-4 py-4">
                     <div className="flex gap-2">

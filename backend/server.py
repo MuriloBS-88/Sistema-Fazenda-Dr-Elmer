@@ -275,6 +275,7 @@ class AnimalBulkCreate(BaseModel):
     sexo: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_atual: Optional[float] = None
+    peso_tipo: Optional[str] = "estimado"
     observacoes: Optional[str] = ""
 
 class Animal(BaseModel):
@@ -469,7 +470,7 @@ async def criar_animais_em_massa(input: AnimalBulkCreate):
         animal_data = {
             "tipo": input.tipo, "tag": tag, "sexo": input.sexo,
             "data_nascimento": input.data_nascimento, "peso_atual": input.peso_atual,
-            "peso_tipo": "estimado",
+            "peso_tipo": input.peso_tipo or "estimado",
             "observacoes": input.observacoes or ""
         }
         animal = Animal(**animal_data)
