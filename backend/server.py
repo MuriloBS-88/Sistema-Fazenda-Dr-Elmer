@@ -241,6 +241,17 @@ class Categoria(BaseModel):
 class AnimalCreate(BaseModel):
     tipo: str
     tag: str
+    sexo: Optional[str] = None
+    genitora_id: Optional[str] = None
+    data_nascimento: Optional[date] = None
+    peso_atual: Optional[float] = None
+    observacoes: Optional[str] = ""
+
+class AnimalBulkCreate(BaseModel):
+    tipo: str
+    tag_inicial: str
+    quantidade: int
+    sexo: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_atual: Optional[float] = None
     observacoes: Optional[str] = ""
@@ -250,6 +261,8 @@ class Animal(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     tipo: str
     tag: str
+    sexo: Optional[str] = None
+    genitora_id: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_atual: Optional[float] = None
     observacoes: Optional[str] = ""
@@ -385,6 +398,32 @@ async def criar_animal(input: AnimalCreate):
     doc = prepare_for_db(animal.model_dump())
     await db.animais.insert_one(doc)
     return animal
+
+@api_router.post("/animais/bulk", response_model=List[Animal])
+async def criar_animais_em_massa(input: AnimalBulkCreate):
+    import re
+    tag_base = input.tag_inicial
+    match = re.match(r'^(.*?)(\d+)$', tag_base)
+    if not match:
+        raise HTTPException(status_code=400, detail="Tag inicial deve terminar com numero. Ex: BOV-001")
+    prefixo = match.group(1)
+    numero_inicial = int(match.group(2))
+    tamanho_numero = len(match.group(2))
+    
+    animais_criados = []
+    for i in range(input.quantidade):
+        numero = numero_inicial + i
+        tag = f"{prefixo}{str(numero).zfill(tamanho_numero)}"
+        animal_data = {
+            "tipo": input.tipo, "tag": tag, "sexo": input.sexo,
+            "data_nascimento": input.data_nascimento, "peso_atual": input.peso_atual,
+            "observacoes": input.observacoes or ""
+        }
+        animal = Animal(**animal_data)
+        doc = prepare_for_db(animal.model_dump())
+        await db.animais.insert_one(doc)
+        animais_criados.append(animal)
+    return animais_criados
 
 @api_router.get("/animais", response_model=List[Animal])
 async def listar_animais(status: Optional[str] = None):
