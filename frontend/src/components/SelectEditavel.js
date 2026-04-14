@@ -27,7 +27,7 @@ export default function SelectEditavel({ campo, value, onValueChange, placeholde
   };
 
   const todasOpcoes = [...opcoesPadrao, ...opcoes.map(o => o.valor)];
-  const opcoesUnicas = [...new Set(todasOpcoes)];
+  const opcoesUnicas = [...new Set(todasOpcoes)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
   const handleAdicionar = async () => {
     if (!novaOpcao.trim()) return;
@@ -54,6 +54,19 @@ export default function SelectEditavel({ campo, value, onValueChange, placeholde
       await axios.delete(`${API}/opcoes/${id}`);
       carregarOpcoes(); toast.success('Opcao removida!');
     } catch (e) { toast.error('Erro ao remover'); }
+  };
+
+  const handleEditarPadrao = async (valorOriginal) => {
+    if (!editandoValor.trim() || editandoValor.trim() === valorOriginal) { setEditandoId(null); return; }
+    try {
+      await axios.post(`${API}/opcoes`, { campo, valor: editandoValor.trim() });
+      setEditandoId(null); setEditandoValor(''); carregarOpcoes();
+      toast.success('Opcao personalizada criada!');
+    } catch (e) { toast.error('Erro ao editar'); }
+  };
+
+  const handleDeletarPadrao = async (valor) => {
+    toast.error('Para remover opcoes padrao, entre em contato com o administrador do sistema');
   };
 
   return (
@@ -99,44 +112,46 @@ export default function SelectEditavel({ campo, value, onValueChange, placeholde
 
           {/* Lista de opcoes */}
           <div className="border border-[#E5E3DB] rounded-lg divide-y divide-[#E5E3DB] max-h-64 overflow-y-auto">
-            {/* Opcoes padrao (nao editaveis) */}
-            {opcoesPadrao.map(op => (
-              <div key={`padrao-${op}`} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-[#3A453F]">{op}</span>
-                <span className="text-[10px] text-[#7A8780] uppercase tracking-wider bg-[#F4F3F0] px-2 py-0.5 rounded">padrao</span>
-              </div>
-            ))}
-
-            {/* Opcoes personalizadas (editaveis) */}
-            {opcoes.map(op => (
-              <div key={op.id} className="flex items-center justify-between px-4 py-3">
-                {editandoId === op.id ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <Input
-                      value={editandoValor}
-                      onChange={(e) => setEditandoValor(e.target.value)}
-                      className="h-8 text-sm"
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEditar(op.id); } }}
-                      autoFocus
-                    />
-                    <button onClick={() => handleEditar(op.id)} className="text-[#3B823E] hover:text-[#2E6831] p-1"><Check size={18} /></button>
-                    <button onClick={() => { setEditandoId(null); setEditandoValor(''); }} className="text-[#7A8780] p-1"><X size={18} /></button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="text-sm text-[#1B2620] font-medium">{op.valor}</span>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setEditandoId(op.id); setEditandoValor(op.valor); }} className="text-[#4A6741] hover:text-[#3B5334] p-1"><Pencil size={16} /></button>
-                      <button onClick={() => handleDeletar(op.id)} className="text-[#C25934] hover:text-[#A64B2B] p-1"><Trash size={16} /></button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-
-            {opcoesPadrao.length === 0 && opcoes.length === 0 && (
+            {opcoesUnicas.length === 0 && (
               <div className="px-4 py-8 text-center text-sm text-[#7A8780]">Nenhuma opcao cadastrada</div>
             )}
+            {opcoesUnicas.sort((a, b) => a.localeCompare(b, 'pt-BR')).map(op => {
+              const opcaoDb = opcoes.find(o => o.valor === op);
+              const isPadrao = opcoesPadrao.includes(op) && !opcaoDb;
+              const itemId = opcaoDb ? opcaoDb.id : `padrao-${op}`;
+
+              return (
+                <div key={itemId} className="flex items-center justify-between px-4 py-3">
+                  {editandoId === itemId ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <Input
+                        value={editandoValor}
+                        onChange={(e) => setEditandoValor(e.target.value)}
+                        className="h-8 text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (opcaoDb) handleEditar(opcaoDb.id);
+                            else handleEditarPadrao(op);
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <button onClick={() => opcaoDb ? handleEditar(opcaoDb.id) : handleEditarPadrao(op)} className="text-[#3B823E] hover:text-[#2E6831] p-1"><Check size={18} /></button>
+                      <button onClick={() => { setEditandoId(null); setEditandoValor(''); }} className="text-[#7A8780] p-1"><X size={18} /></button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-sm text-[#1B2620] font-medium">{op}</span>
+                      <div className="flex gap-1">
+                        <button onClick={() => { setEditandoId(itemId); setEditandoValor(op); }} className="text-[#4A6741] hover:text-[#3B5334] p-1"><Pencil size={16} /></button>
+                        <button onClick={() => opcaoDb ? handleDeletar(opcaoDb.id) : handleDeletarPadrao(op)} className="text-[#C25934] hover:text-[#A64B2B] p-1"><Trash size={16} /></button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex justify-end">
