@@ -99,6 +99,12 @@ class RegisterUserInput(BaseModel):
     password: str
     role: str = "user"
 
+class UpdateUserInput(BaseModel):
+    nome: str
+    email: str
+    password: Optional[str] = None
+    role: str = "user"
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -199,6 +205,24 @@ async def deletar_usuario(user_id: str, request: Request):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado")
     return {"message": "Usuario deletado"}
+
+@api_router.put("/users/{user_id}", response_model=UserResponse)
+async def atualizar_usuario(user_id: str, input: UpdateUserInput, request: Request):
+    await require_admin(request)
+    email = input.email.lower().strip()
+    existing = await db.users.find_one({"email": email, "id": {"$ne": user_id}})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email ja cadastrado por outro usuario")
+    update_data = {"nome": input.nome, "email": email, "role": input.role}
+    if input.password:
+        update_data["password_hash"] = hash_password(input.password)
+    result = await db.users.update_one({"id": user_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado")
+    doc = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    if isinstance(doc.get("created_at"), str):
+        doc["created_at"] = datetime.fromisoformat(doc["created_at"])
+    return doc
 
 
 # ============= EXISTING MODELS =============
