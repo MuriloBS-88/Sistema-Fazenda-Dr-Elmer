@@ -270,24 +270,26 @@ class Animal(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MovimentacaoCreate(BaseModel):
-    tipo: Literal["entrada", "saida"]
+    tipo: Literal["entrada", "saida", "producao"]
     motivo: str
     animal_id: Optional[str] = None
     data: date
     valor: Optional[float] = None
-    quantidade: int = 1
+    quantidade: float = 1
+    unidade: Optional[str] = None
     tipo_animal: Optional[str] = None
     observacoes: Optional[str] = ""
 
 class Movimentacao(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    tipo: Literal["entrada", "saida"]
+    tipo: Literal["entrada", "saida", "producao"]
     motivo: str
     animal_id: Optional[str] = None
     data: date
     valor: Optional[float] = None
-    quantidade: int = 1
+    quantidade: float = 1
+    unidade: Optional[str] = None
     tipo_animal: Optional[str] = None
     observacoes: Optional[str] = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -547,7 +549,7 @@ async def obter_stats():
     total_vendidos = len([a for a in animais if a.get("status") == "venda"])
     total_mortos = len([a for a in animais if a.get("status") in ["morte", "perda"]])
 
-    receitas = sum(m.get("valor", 0) or 0 for m in movimentacoes if m.get("tipo") == "saida" and m.get("motivo") == "venda")
+    receitas = sum(m.get("valor", 0) or 0 for m in movimentacoes if (m.get("tipo") == "saida" and m.get("motivo") == "venda") or m.get("tipo") == "producao")
     total_despesas = sum(d.get("valor", 0) for d in despesas)
     custos_entrada = sum(m.get("valor", 0) or 0 for m in movimentacoes if m.get("tipo") == "entrada")
     total_despesas += custos_entrada
@@ -559,7 +561,7 @@ async def obter_stats():
         mes = str(data_str)[:7] if data_str else "unknown"
         if mes not in movimentacoes_mes:
             movimentacoes_mes[mes] = {"mes": mes, "receitas": 0, "despesas": 0}
-        if m.get("tipo") == "saida" and m.get("motivo") == "venda":
+        if (m.get("tipo") == "saida" and m.get("motivo") == "venda") or m.get("tipo") == "producao":
             movimentacoes_mes[mes]["receitas"] += m.get("valor", 0) or 0
         elif m.get("tipo") == "entrada":
             movimentacoes_mes[mes]["despesas"] += m.get("valor", 0) or 0
