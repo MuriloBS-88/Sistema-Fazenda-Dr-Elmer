@@ -265,6 +265,7 @@ class AnimalCreate(BaseModel):
     genitora_id: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_atual: Optional[float] = None
+    peso_tipo: Optional[str] = "efetivo"
     observacoes: Optional[str] = ""
 
 class AnimalBulkCreate(BaseModel):
@@ -285,6 +286,7 @@ class Animal(BaseModel):
     genitora_id: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_atual: Optional[float] = None
+    peso_tipo: Optional[str] = "efetivo"
     observacoes: Optional[str] = ""
     status: str = "ativo"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -467,6 +469,7 @@ async def criar_animais_em_massa(input: AnimalBulkCreate):
         animal_data = {
             "tipo": input.tipo, "tag": tag, "sexo": input.sexo,
             "data_nascimento": input.data_nascimento, "peso_atual": input.peso_atual,
+            "peso_tipo": "estimado",
             "observacoes": input.observacoes or ""
         }
         animal = Animal(**animal_data)

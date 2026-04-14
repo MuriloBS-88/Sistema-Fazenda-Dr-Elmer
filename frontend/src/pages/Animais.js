@@ -311,7 +311,7 @@ export default function Animais() {
                   <td className="px-4 py-4 text-[#3A453F]">{animal.sexo === 'macho' ? 'Macho' : animal.sexo === 'femea' ? 'Femea' : '-'}</td>
                   <td className="px-4 py-4 text-[#3A453F]">{formatarIdade(animal.data_nascimento)}</td>
                   <td className="px-4 py-4 text-[#3A453F]">{animal.genitora_id ? getGenitoraTag(animal.genitora_id) : '-'}</td>
-                  <td className="px-4 py-4 text-[#3A453F]">{animal.peso_atual ? `${animal.peso_atual} kg` : '-'}</td>
+                  <td className="px-4 py-4 text-[#3A453F]">{animal.peso_atual ? <span className="flex items-center gap-1">{animal.peso_atual} kg <span className={`text-[10px] font-medium px-1 rounded ${animal.peso_tipo === 'estimado' ? 'bg-[#D99B29]/15 text-[#D99B29]' : 'bg-[#3B823E]/15 text-[#3B823E]'}`}>{animal.peso_tipo === 'estimado' ? 'EST' : 'EFT'}</span></span> : '-'}</td>
                   <td className="px-4 py-4"><span className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusBadge(animal.status)}`}>{animal.status}</span></td>
                   <td className="px-4 py-4">
                     <div className="flex gap-2">
