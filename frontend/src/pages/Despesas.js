@@ -18,6 +18,7 @@ export default function Despesas() {
   const [dialogDespesaOpen, setDialogDespesaOpen] = useState(false);
   const [dialogCategoriaOpen, setDialogCategoriaOpen] = useState(false);
   const [editandoDespesa, setEditandoDespesa] = useState(null);
+  const [editandoCategoria, setEditandoCategoria] = useState(null);
   const [formDespesa, setFormDespesa] = useState({ categoria_id: '', valor: '', data: new Date().toISOString().split('T')[0], descricao: '' });
   const [formCategoria, setFormCategoria] = useState({ nome: '', cor: '#4A6741' });
 
@@ -54,8 +55,13 @@ export default function Despesas() {
     e.preventDefault();
     if (!formCategoria.nome) { toast.error('Preencha o nome da categoria'); return; }
     try {
-      await axios.post(`${API}/categorias`, formCategoria);
-      toast.success('Categoria criada!');
+      if (editandoCategoria) {
+        await axios.put(`${API}/categorias/${editandoCategoria.id}`, formCategoria);
+        toast.success('Categoria atualizada!');
+      } else {
+        await axios.post(`${API}/categorias`, formCategoria);
+        toast.success('Categoria criada!');
+      }
       setDialogCategoriaOpen(false); resetFormCategoria(); carregarDados();
     } catch (error) { toast.error('Erro ao salvar categoria'); }
   };
@@ -73,7 +79,13 @@ export default function Despesas() {
   };
 
   const resetFormDespesa = () => { setFormDespesa({ categoria_id: '', valor: '', data: new Date().toISOString().split('T')[0], descricao: '' }); setEditandoDespesa(null); };
-  const resetFormCategoria = () => { setFormCategoria({ nome: '', cor: '#4A6741' }); };
+  const resetFormCategoria = () => { setFormCategoria({ nome: '', cor: '#4A6741' }); setEditandoCategoria(null); };
+
+  const abrirEdicaoCategoria = (categoria) => {
+    setEditandoCategoria(categoria);
+    setFormCategoria({ nome: categoria.nome, cor: categoria.cor });
+    setDialogCategoriaOpen(true);
+  };
 
   const abrirEdicaoDespesa = (despesa) => {
     setEditandoDespesa(despesa);
@@ -100,7 +112,7 @@ export default function Despesas() {
               </Button>
             </DialogTrigger>
             <DialogContent data-testid="categoria-dialog">
-              <DialogHeader><DialogTitle>Nova Categoria</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editandoCategoria ? 'Editar Categoria' : 'Nova Categoria'}</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmitCategoria} className="space-y-4">
                 <div>
                   <Label>Nome *</Label>
@@ -216,7 +228,10 @@ export default function Despesas() {
                   <div className="w-10 h-10 rounded-lg" style={{ backgroundColor: categoria.cor }} />
                   <span className="text-[#1B2620] font-medium">{categoria.nome}</span>
                 </div>
-                <button onClick={() => handleDeleteCategoria(categoria.id)} className="text-[#C25934] hover:text-[#A64B2B]"><Trash size={18} /></button>
+                <div className="flex gap-2">
+                  <button onClick={() => abrirEdicaoCategoria(categoria)} className="text-[#4A6741] hover:text-[#3B5334]"><Pencil size={18} /></button>
+                  <button onClick={() => handleDeleteCategoria(categoria.id)} className="text-[#C25934] hover:text-[#A64B2B]"><Trash size={18} /></button>
+                </div>
               </div>
             ))}
           </div>

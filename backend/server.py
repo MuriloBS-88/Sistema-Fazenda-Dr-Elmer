@@ -368,6 +368,14 @@ async def deletar_categoria(categoria_id: str):
         raise HTTPException(status_code=404, detail="Categoria nao encontrada")
     return {"message": "Categoria deletada"}
 
+@api_router.put("/categorias/{categoria_id}", response_model=Categoria)
+async def atualizar_categoria(categoria_id: str, input: CategoriaCreate):
+    result = await db.categorias.update_one({"id": categoria_id}, {"$set": {"nome": input.nome, "cor": input.cor}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Categoria nao encontrada")
+    doc = await db.categorias.find_one({"id": categoria_id}, {"_id": 0})
+    return serialize_doc(doc)
+
 
 # ============= ANIMAIS =============
 
